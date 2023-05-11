@@ -6,7 +6,10 @@ __pycache__
 db.sqlite3
 media
 .idea
+.idea/
+idea/
 static
+.static/
 
 # Distribution / packaging
 .Python build/
@@ -48,4 +51,5 @@ ENV/
 env.bak/
 venv.bak/
 
+.csv
 clothes_database.csv
