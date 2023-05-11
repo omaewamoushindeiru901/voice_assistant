@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+	<meta charset="utf-8">
+	<title>Speech Recognition Example</title>
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+	<script>
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+
+		function startRecognition() {
+            var startButton = document.querySelector("#start-button");
+            startButton.classList.add("recording");
+
+            var csrfToken = getCookie('csrftoken');
+            var formData = new FormData();
+            formData.append('record', 'true');
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                document.querySelector('#text-box').innerHTML = '<p>You said: ' + data.text + '</p>';
+                if (data.search_results && data.search_results.length > 0) {
+                    var shelfNumbers = data.search_results.join(", ");
+                    document.querySelector('#text-box').innerHTML += '<p>Ви можете знайти речі на поличці(поличках): ' + shelfNumbers + '</p>';
+                } else {
+                     document.querySelector('#text-box').innerHTML += '<p>Наразі такого товару в нас немає:(</p>';
+                }
+                startButton.classList.remove("recording");
+            })
+            .catch(error => {
+                console.error(error);
+                startButton.classList.remove("recording");
+            });
+        }
+	</script>
+</head>
+<body>
+	<div class="container">
+		<h1>ВАШ ГОЛОСОВИЙ ПОМІЧНИК</h1>
+		<p>Натисніть на кнопку та почніть говорити...</p>
+		<form method="POST">
+            {% csrf_token %}
+            <button type="button" id="start-button" onclick="startRecognition()">Старт</button>
+        </form>
+        <div id="text-box">
+		    {% if text %}
+			<p>You said: {{ text }}</p>
+		    {% endif %}
+	    </div>
+	</div>
+</body>
+</html>

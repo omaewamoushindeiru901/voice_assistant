@@ -1,0 +1,73 @@
+/* Правила для всього сайту */
+* {
+  box-sizing: border-box;
+  font-family: "Courier New", monospace;
+  color: #2c3e50;
+}
+
+h1 {
+  font-weight: bold;
+  font-size: 40px;
+  font-family: "Arial Black", serif;
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 20px; /* підняти на 20 пікселів вище */
+}
+
+body {
+  background-color: #ecf0f1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.p {
+  display: flex;
+  font-size: 22px;
+  font-family: "Courier New", monospace;
+  align-items: center;
+}
+
+.container {
+  max-width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#start-button {
+  width: auto;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #2980b9;
+  transition: background-color 0.2s ease-in-out;
+}
+
+#start-button:hover {
+  background-color: #005cb2;
+}
+
+#start-button.recording {
+  background-color: red;
+}
+
+@media only screen and (min-width: 768px) {
+  /* Заголовок */
+  h1 {
+    font-size: 56px;
+  }
+}
