@@ -53,4 +53,8 @@ venv.bak/
 
 .csv
 clothes_database.csv
+.ckpt
+model.ckpt
 voice_assistant/settings.py
+audio.wav
+misc_words.csv

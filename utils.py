@@ -1,24 +1,66 @@
-import speech_recognition as sr
+import nemo.collections.asr as nemo_asr
+import numpy as np
 import pandas as pd
 import pymorphy2
+import speech_recognition as sr
+import torch
+import torchaudio
+from transformers import Wav2Vec2Processor
+import pyaudio
+import wave
+import io
+from pydub import AudioSegment
+from pydub.utils import make_chunks
 
+batch_size = 16
+import logging
 
-def recognize_speech():
+logging.getLogger("NeMo").setLevel(logging.WARNING)
+
+'''def recognize_speech():
+    # Завантаження моделі
+    model = nemo_asr.models.EncDecCTCModel.load_from_checkpoint("model.ckpt")
+    model.eval()
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Говоріть зараз...")
         audio = r.listen(source)
-    try:
-        # Використовуйте готову ASR-модель
-        text = r.recognize_google(audio, language='uk-UA')
-        print("Розпізнано текст " + text)
-        return text
-    except sr.UnknownValueError:
-        print("ASR не зміг розпізнати текст")
-    except sr.RequestError as e:
-        print(f"Помилка {e}")
+        # Convert audio data to PyTorch tensor
+    audio_np = np.frombuffer(audio.frame_data, dtype=np.int16)
+    audio_tensor = torch.from_numpy(audio_np).unsqueeze(0).float()
+   # audio_tensor = audio_tensor.set_channels(1)
+    # Transcribe the audio files
+    predictions = model.transcribe(audio_tensor)
+    predictions = [prediction.replace('▁', ' ') for prediction in predictions]
+    print(predictions)
+    return predictions'''
+
+import soundfile as sf
+
+
+def recognize_speech():
+    # Load the ASR model
+    model = nemo_asr.models.EncDecCTCModel.load_from_checkpoint("model.ckpt")
+    model.eval()
+
+    # Record audio from the microphone
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Говоріть зараз...")
+        audio = r.listen(source)
+
+    with open("audio.wav", "wb") as f:
+        f.write(audio.get_wav_data(convert_rate=16000, convert_width=2))
+    predictions = model.transcribe(["audio.wav"])
+    prediction = ""
+    for pr in predictions:
+        prediction += str(pr)
+
+    return prediction[1:].replace("▁", " ")
+
 
 def search_keywords_in_db(text):
+    text = remove_words_from_string(text, 'misc_words.csv')
     df = pd.read_csv('clothes_database.csv')
     morph = pymorphy2.MorphAnalyzer()
     lemmas = [morph.parse(keyword)[0].normal_form for keyword in text.split()]
@@ -36,3 +78,9 @@ def search_keywords_in_db(text):
     return search_results
 
 
+def remove_words_from_string(string, words_file):
+    with open(words_file, encoding='utf-8') as f:
+        words = f.readline().split(',')
+    for word in words:
+        string = string.replace(str(word), '')
+    return string
