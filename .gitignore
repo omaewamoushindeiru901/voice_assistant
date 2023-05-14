@@ -51,10 +51,8 @@ ENV/
 env.bak/
 venv.bak/
 
-.csv
 clothes_database.csv
-.ckpt
-model.ckpt
+model.nemo
 voice_assistant/settings.py
 audio.wav
 misc_words.csv

@@ -1,49 +1,15 @@
 import nemo.collections.asr as nemo_asr
-import numpy as np
 import pandas as pd
-import pymorphy2
 import speech_recognition as sr
-import torch
-import torchaudio
-from transformers import Wav2Vec2Processor
-import pyaudio
-import wave
-import io
-from pydub import AudioSegment
-from pydub.utils import make_chunks
+from uk_stemmer import UkStemmer
 
 batch_size = 16
-import logging
 
-logging.getLogger("NeMo").setLevel(logging.WARNING)
-
-'''def recognize_speech():
-    # Завантаження моделі
-    model = nemo_asr.models.EncDecCTCModel.load_from_checkpoint("model.ckpt")
-    model.eval()
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Говоріть зараз...")
-        audio = r.listen(source)
-        # Convert audio data to PyTorch tensor
-    audio_np = np.frombuffer(audio.frame_data, dtype=np.int16)
-    audio_tensor = torch.from_numpy(audio_np).unsqueeze(0).float()
-   # audio_tensor = audio_tensor.set_channels(1)
-    # Transcribe the audio files
-    predictions = model.transcribe(audio_tensor)
-    predictions = [prediction.replace('▁', ' ') for prediction in predictions]
-    print(predictions)
-    return predictions'''
-
-import soundfile as sf
+model = nemo_asr.models.EncDecCTCModel.restore_from("model.nemo")
+model.eval()
 
 
 def recognize_speech():
-    # Load the ASR model
-    model = nemo_asr.models.EncDecCTCModel.load_from_checkpoint("model.ckpt")
-    model.eval()
-
-    # Record audio from the microphone
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Говоріть зараз...")
@@ -51,21 +17,26 @@ def recognize_speech():
 
     with open("audio.wav", "wb") as f:
         f.write(audio.get_wav_data(convert_rate=16000, convert_width=2))
-    predictions = model.transcribe(["audio.wav"])
+    predictions = model.transcribe(["audio.wav"], batch_size=batch_size)
     prediction = ""
     for pr in predictions:
         prediction += str(pr)
 
-    return prediction[1:].replace("▁", " ")
+    return prediction.replace("▁", " ")
 
 
 def search_keywords_in_db(text):
     text = remove_words_from_string(text, 'misc_words.csv')
     df = pd.read_csv('clothes_database.csv')
-    morph = pymorphy2.MorphAnalyzer()
-    lemmas = [morph.parse(keyword)[0].normal_form for keyword in text.split()]
+    stemmer = UkStemmer()
+    lemmas = [stemmer.stemWord(keyword) for keyword in text.split()]
     print("lemmas: ", lemmas)
+
+    names_list = set([name.lower() for name in df['Назва'].tolist()])
+
     search_results = set()
+    found = False
+
     for index, row in df.iterrows():
         found_keywords = []
         for lemma in lemmas:
@@ -74,8 +45,19 @@ def search_keywords_in_db(text):
                 found_keywords.append(lemma)
         if len(found_keywords) == len(lemmas):
             search_results.add(row['Полиця'])
+            found = True
+
+    if not found:
+        for lemma in lemmas:
+            for name in names_list:
+                if lemma in name:
+                    print(lemma)
+                    search_results = set(df['Полиця'][df['Назва'].str.lower().str.contains(lemma.lower())])
+                    break
+            if search_results:
+                break
     search_results = sorted(list(search_results))
-    return search_results
+    return search_results, found
 
 
 def remove_words_from_string(string, words_file):

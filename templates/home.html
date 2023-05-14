@@ -31,11 +31,14 @@
             .then(data => {
                 console.log(data)
                 document.querySelector('#text-box').innerHTML = '<p>You said: ' + data.text + '</p>';
-                if (data.search_results && data.search_results.length > 0) {
+                if (data.search_results && data.found) {
                     var shelfNumbers = data.search_results.join(", ");
                     document.querySelector('#text-box').innerHTML += '<p>Ви можете знайти речі на поличці(поличках): ' + shelfNumbers + '</p>';
+                } else if (data.search_results.length > 0 && !data.found) {
+                     var similarItems = data.search_results.join(", ");
+                     document.querySelector('#text-box').innerHTML += '<p>Такого товару в нас наразі немає, але пропонуємо схожі на таких полицях: ' + similarItems + '</p>';
                 } else {
-                     document.querySelector('#text-box').innerHTML += '<p>Наразі такого товару в нас немає:(</p>';
+                     document.querySelector('#text-box').innerHTML += '<p>За вашим запитом нічого не було знайдено:(</p>';
                 }
                 startButton.classList.remove("recording");
             })
